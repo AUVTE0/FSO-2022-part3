@@ -1,5 +1,6 @@
 const express = require('express')
-var morgan = require('morgan')
+const cors = require('cors')
+const morgan = require('morgan')
 const app = express()
 
 morgan.token('data', (req, res) => {
@@ -8,6 +9,7 @@ morgan.token('data', (req, res) => {
 
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :data'))
+app.use(cors())
 
 let persons = [
     { 
@@ -77,7 +79,7 @@ app.delete('/api/persons/:id', (req, res) => {
     }
     persons = persons.filter(p => p.id !== id)
     console.log('Success deleting')
-    res.status(204).end()
+    res.send(person)
 })
 
 app.post('/api/persons', (req, res) => {
@@ -96,7 +98,7 @@ app.post('/api/persons', (req, res) => {
         number: req.body.number
     }
     persons = persons.concat(newPerson)
-    res.send(persons)
+    res.send(newPerson)
 })
 
 const PORT = 3001
