@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
-const Note = require('./models/person')
+const Person = require('./models/person')
 const app = express()
 
 morgan.token('data', (req, res) => {
@@ -60,7 +60,7 @@ app.get('/info', (req, res) => {
 
 
 app.get('/api/persons', (req, res) =>{
-    Note.find()
+    Person.find()
         .then( persons => res.json(persons))
 })
 
@@ -91,18 +91,22 @@ app.post('/api/persons', (req, res) => {
         res.statusMessage = "Name or number missing"
         res.status(400).end()
     }
-    if(persons.map(p => p.name).includes(req.body.name)){
-        res.statusMessage = "Person already exists"
-        res.status(400).end()
-    }
+    // if(persons.map(p => p.name).includes(req.body.name)){
+    //     res.statusMessage = "Person already exists"
+    //     res.status(400).end()
+    // }
 
-    const newPerson = {
-        id: generateId(),
+    const newPerson = new Person({
+        // id: generateId(),
         name: req.body.name,
         number: req.body.number
-    }
-    persons = persons.concat(newPerson)
-    res.send(newPerson)
+    })
+    newPerson.save().then( result => {
+        console.log(result)
+        // persons = persons.concat(newPerson)
+        res.send(newPerson)
+    })
+    
 })
 
 const PORT = process.env.PORT
