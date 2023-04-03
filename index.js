@@ -75,6 +75,15 @@ app.delete('/api/persons/:id', (req, res) => {
 })
 
 app.post('/api/persons', (req, res) => {
+    if(!req.body.name || !req.body.number){
+        res.statusMessage = "Name or number missing"
+        res.status(400).end()
+    }
+    if(persons.map(p => p.name).includes(req.body.name)){
+        res.statusMessage = "Person already exists"
+        res.status(400).end()
+    }
+
     const newPerson = {
         id: generateId(),
         name: req.body.name,
