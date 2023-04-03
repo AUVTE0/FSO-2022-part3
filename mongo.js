@@ -10,7 +10,14 @@ const password = process.argv[2]
 const url = `mongodb+srv://fso:${password}@fso.xgrbbds.mongodb.net/phonebook?retryWrites=true&w=majority`
 
 mongoose.set('strictQuery', false)
-mongoose.connect(url)
+mongoose
+    .connect(url)
+    .then(() => {
+        console.log('connected to MongoDB')
+    })
+    .catch((e) => {
+        console.log('error connecting to MongoDB: ', e.message)
+    })
 
 const personSchema = new mongoose.Schema({
     name: String,
@@ -21,7 +28,7 @@ const Person = mongoose.model('Person', personSchema)
 
 if (process.argv.length < 4) {
     console.log('phonebook:')
-    Person.find({}).then(result =>{
+    Person.find({}).then(result => {
         result.forEach(person => {
             console.log(`${person.name} ${person.number}`)
         })
@@ -34,8 +41,8 @@ else {
         name: process.argv[3],
         number: process.argv[4]
     })
-    
-    newPerson.save().then( result => {
+
+    newPerson.save().then( () => {
         console.log(`added ${newPerson.name} number ${newPerson.number} to phonebook`)
         mongoose.connection.close()
     })

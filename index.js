@@ -5,7 +5,7 @@ const morgan = require('morgan')
 const Person = require('./models/person')
 const app = express()
 
-morgan.token('data', (req, res) => {
+morgan.token('data', (req) => {
     return JSON.stringify(req.body)
 })
 app.use(express.static('build'))
@@ -18,20 +18,20 @@ app.get('/', (req, res) => {
     res.send('<h1>Hello!</h1>')
 })
 
-app.get('/info', (req, res) => {
+app.get('/info', (req, res, next) => {
     const receiveTime = new Date()
-    console.log(receiveTime.toISOString())
+    console.log(receiveTime.toISOString(), req.body)
     Person.find()
         .then( persons => res.send(
             `<p>Phonebook has info for ${persons.length} people</p>
                 ${receiveTime}`))
         .catch( error => next(error))
-    
+
 
 })
 
 
-app.get('/api/persons', (req, res, next) =>{
+app.get('/api/persons', (req, res, next) => {
     Person.find()
         .then( persons => res.json(persons))
         .catch( error => next(error))
@@ -57,10 +57,9 @@ app.get('/api/persons/:id', (req, res, next) => {
 
 app.delete('/api/persons/:id', (req, res, next) => {
     const id = req.params.id
-    const person = Person.findById(id)
     Person.findByIdAndRemove(id)
         .then(result => {
-            console.log('Success deleting')
+            console.log('Success deleting', result)
             res.status(204).end()
         })
         .catch(error => {
@@ -70,7 +69,7 @@ app.delete('/api/persons/:id', (req, res, next) => {
 
 app.post('/api/persons', (req, res, next) => {
     if(!req.body.name || !req.body.number){
-        res.statusMessage = "Name or number missing"
+        res.statusMessage = 'Name or number missing'
         res.status(400).end()
     }
     // if(persons.map(p => p.name).includes(req.body.name)){
@@ -92,20 +91,20 @@ app.post('/api/persons', (req, res, next) => {
     .catch(error => {
         next(error)
     })
-    
+
 })
 
 app.put('/api/persons/:id', (req, res, next) => {
     const body = req.body
-    console.log("Request body", req.body)
+    console.log('Request body', req.body)
     const person = {
         name: body.name,
         number: body.number
     }
     console.log(person)
-    Person.findByIdAndUpdate(req.params.id, person, {new: true, runValidators: true, context: 'query'})
+    Person.findByIdAndUpdate(req.params.id, person, { new: true, runValidators: true, context: 'query' })
     .then( updatedPerson => res.json(updatedPerson))
-    .catch(error =>{
+    .catch(error => {
         next(error)
     })
 })
@@ -113,23 +112,21 @@ app.put('/api/persons/:id', (req, res, next) => {
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
   }
-  
+
 // handler of requests with unknown endpoint
 app.use(unknownEndpoint)
 const errorHandler = (error, req, res, next) => {
     console.log('error!')
-    // console.error(error.message)
+    console.error(error.message)
 
-    if(error.name === "CastError"){
-        return res.status(400).send({error: 'malformatted id'})
+    if(error.name === 'CastError'){
+        return res.status(400).send({ error: 'malformatted id' })
     }
-    else if(error.name ==="ValidationError"){
-        console.log('Validator ERROR!')
-        return res.status(400).json({error: error.message})
+    else if(error.name ==='ValidationError'){
+        console.log('Validator ERROR!', error.message)
+        return res.status(400).send(error.message)
     }
-    else{
-        return res.status(400).send({error: 'unknown error'})
-    }
+    next(error)
 }
 app.use(errorHandler)
 
