@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
 
+app.use(express.json())
+
 const persons = [
     { 
       "id": 1,
@@ -28,10 +30,6 @@ app.get('/', (req, res) => {
     res.send('<h1>Hello!</h1>')
 })
 
-app.get('/api/persons', (req, res) =>{
-    res.send(persons)
-})
-
 app.get('/info', (req, res) => {
     const receiveTime = new Date()
     console.log(receiveTime.toISOString())
@@ -39,6 +37,20 @@ app.get('/info', (req, res) => {
         `<p>Phonebook has info for ${persons.length} people</p>
             ${receiveTime}`)
 
+})
+
+
+app.get('/api/persons', (req, res) =>{
+    res.send(persons)
+})
+
+app.get('/api/persons/:id', (req, res) => {
+    const id = Number(req.params.id)
+    const person = persons.find(p => p.id === id)
+    if(!person){
+        res.status(404).end()
+    }
+    res.send(person)
 })
 
 const PORT = 3001
