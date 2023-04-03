@@ -84,12 +84,27 @@ app.post('/api/persons', (req, res, next) => {
     .then( result => {
         console.log(result)
         // persons = persons.concat(newPerson)
-        res.send(newPerson)
+        res.json(newPerson)
     })
     .catch(error => {
         next(error)
     })
     
+})
+
+app.put('/api/persons/:id', (req, res, next) => {
+    const body = req.body
+    console.log("Request body", req.body)
+    const person = {
+        name: body.name,
+        number: body.number
+    }
+    console.log(person)
+    Person.findByIdAndUpdate(req.params.id, person, {new: true})
+    .then( updatedPerson => res.json(updatedPerson))
+    .catch(error =>{
+        next(error)
+    })
 })
 
 const unknownEndpoint = (request, response) => {
