@@ -8,42 +8,11 @@ const app = express()
 morgan.token('data', (req, res) => {
     return JSON.stringify(req.body)
 })
-
+app.use(express.static('build'))
+app.use(cors())
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :data'))
-app.use(cors())
-app.use(express.static('build'))
 
-// let persons = [
-//     { 
-//       "id": 1,
-//       "name": "Arto Hellas", 
-//       "number": "040-123456"
-//     },
-//     { 
-//       "id": 2,
-//       "name": "Ada Lovelace", 
-//       "number": "39-44-5323523"
-//     },
-//     { 
-//       "id": 3,
-//       "name": "Dan Abramov", 
-//       "number": "12-43-234345"
-//     },
-//     { 
-//       "id": 4,
-//       "name": "Mary Poppendieck", 
-//       "number": "39-23-6423122"
-//     }
-// ]
-
-// const generateId = () => {
-//     let newId = Math.floor(Math.random()*1000)
-//     while(persons.find(p => p.id === newId)){
-//         newId = generateId()
-//     }
-//     return newId
-// }
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello!</h1>')
@@ -59,25 +28,31 @@ app.get('/info', (req, res) => {
 })
 
 
-app.get('/api/persons', (req, res) =>{
+app.get('/api/persons', (req, res, next) =>{
     Person.find()
         .then( persons => res.json(persons))
+        .catch( error => next(error))
 })
 
-app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
+app.get('/api/persons/:id', (req, res, next) => {
+    console.log(next)
+    const id = req.params.id
     Person.findById(id)
         .then(person => {
-            console.log("Person found")
-            res.send(person)
+            if(person){
+                res.send(person)
+            }
+            // else{
+            //     console.log('Person not found!')
+            //     res.status(404).end()
+            // }
         })
-        .catch(e => {
-            console.log('Person not found!')
-            res.status(404).end()
+        .catch(error => {
+            next(error)
         })
 })
 
-app.delete('/api/persons/:id', (req, res) => {
+app.delete('/api/persons/:id', (req, res, next) => {
     const id = req.params.id
     const person = Person.findById(id)
     Person.findByIdAndRemove(id)
@@ -85,13 +60,12 @@ app.delete('/api/persons/:id', (req, res) => {
             console.log('Success deleting')
             res.status(204).end()
         })
-        .catch(e => {
-            console.log('Error deleting: ', e.message)
-            res.status(404).end()
+        .catch(error => {
+            next(error)
         })
 })
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
     if(!req.body.name || !req.body.number){
         res.statusMessage = "Name or number missing"
         res.status(400).end()
@@ -106,13 +80,36 @@ app.post('/api/persons', (req, res) => {
         name: req.body.name,
         number: req.body.number
     })
-    newPerson.save().then( result => {
+    newPerson.save()
+    .then( result => {
         console.log(result)
         // persons = persons.concat(newPerson)
         res.send(newPerson)
     })
+    .catch(error => {
+        next(error)
+    })
     
 })
+
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+  }
+  
+// handler of requests with unknown endpoint
+app.use(unknownEndpoint)
+const errorHandler = (error, req, res, next) => {
+    console.log('error!')
+    // console.error(error.message)
+
+    if(error.name === "CastError"){
+        return res.status(400).send({error: 'malformatted id'})
+    }
+    else{
+        return res.status(400).send({error: 'unknown error'})
+    }
+}
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
