@@ -21,9 +21,12 @@ app.get('/', (req, res) => {
 app.get('/info', (req, res) => {
     const receiveTime = new Date()
     console.log(receiveTime.toISOString())
-    res.send(
-        `<p>Phonebook has info for ${persons.length} people</p>
-            ${receiveTime}`)
+    Person.find()
+        .then( persons => res.send(
+            `<p>Phonebook has info for ${persons.length} people</p>
+                ${receiveTime}`))
+        .catch( error => next(error))
+    
 
 })
 
