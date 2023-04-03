@@ -1,0 +1,29 @@
+const mongoose = require('mongoose')
+
+// check for password in cl arg
+const url = process.env.MONGODB_URI
+
+mongoose.set('strictQuery', false)
+mongoose.connect(url)
+    .then(result => {
+        console.log("connected to MongoDB")
+    })
+    .catch((e) => {
+        console.log("error connecting to MongoDB: ", e.message)
+    })
+
+const personSchema = new mongoose.Schema({
+    name: String,
+    number: String
+})
+
+personSchema.set('toJSON', {
+    transform: (doc, returnedObj) => {
+        returnedObj.id = doc._id.toString(),
+        delete returnedObj._id
+        delete returnedObj.__v
+    }
+})
+
+module.exports = mongoose.model('Person', personSchema)
+
